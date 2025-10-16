@@ -1,6 +1,6 @@
-from fastapi import FastAPI
-from app.schemas import GoldInput
-from app.model import predict_price
+from fastapi import FastAPI, HTTPException
+from schemas import GoldInput
+from model import predict_price
 
 app = FastAPI()
 
@@ -10,6 +10,11 @@ def root():
 
 @app.post("/predict")
 def predict(data: GoldInput):
-    features = [data.SPX, data.USO, data.SLV, data.EUR_USD]
-    result = predict_price(features)
+    try:
+        features = [data.SPX, data.USO, data.SLV, data.EUR_USD]
+        result = predict_price(features)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Prediction failed")
     return {"predicted_price": result}
